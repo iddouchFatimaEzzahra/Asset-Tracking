@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asset Tracking - ENSA Oujda</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 20px;
+        }
+
+        .map-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        #map {
+            width: 670px;
+            height: 600px;
+            border: 3px solid #333;
+            border-radius: 5px;
+            position: relative;
+            background: #f8f9fa;
+            overflow: hidden;
+            margin: 0 auto;
+        }
+
+        .info-panel {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .info-section {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .info-section:last-child {
+            border-bottom: none;
+        }
+
+        .info-title {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            font-size: 14px;
+        }
+
+        .info-label {
+            color: #666;
+        }
+
+        .info-value {
+            color: #333;
+            font-weight: bold;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status-online {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-offline {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .scanner {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background: #4CAF50;
+            border: 4px solid white;
+            border-radius: 50%;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 22px;
+            z-index: 10;
+        }
+
+        .beacon {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: #FF5722;
+            border: 4px solid white;
+            border-radius: 50%;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+            animation: pulse 2s infinite;
+            z-index: 20;
+            transition: all 0.5s ease;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.15); opacity: 0.8; }
+        }
+
+        .distance-line {
+            position: absolute;
+            height: 3px;
+            background: rgba(255, 87, 34, 0.4);
+            transform-origin: left center;
+            z-index: 5;
+            transition: all 0.5s ease;
+        }
+
+        .grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                repeating-linear-gradient(0deg, transparent, transparent 99px, #ddd 99px, #ddd 100px),
+                repeating-linear-gradient(90deg, transparent, transparent 99px, #ddd 99px, #ddd 100px);
+            opacity: 0.3;
+        }
+
+        .zone-label {
+            position: absolute;
+            background: rgba(255,255,255,0.9);
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: bold;
+            color: #333;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .debug-info {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 5px;
+            font-size: 11px;
+            font-family: monospace;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+
+        .warning-box {
+            background: #d1ecf1;
+            border: 2px solid #17a2b8;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+
+        .warning-box h3 {
+            color: #0c5460;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .warning-box p {
+            color: #0c5460;
+            font-size: 13px;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Asset Tracking - Localisation en Temps Réel</h1>
+            <p class="subtitle">ENSA Oujda - Ingénierie Data Science & Cloud Computing (IDSCC)</p>
+            <p class="subtitle" style="margin-top: 5px; color: #FF5722; font-weight: bold;">
+                📦 CARTON : 30 cm × 30 cm
+            </p>
+        </div>
+
+        <div class="main-content">
+            <div class="map-container">
+                <h2 style="margin-bottom: 15px;">📍 Carte de Localisation</h2>
+                <div id="map">
+                    <div class="grid"></div>
+                    <!-- Labels des coins - COORDONNÉES PHYSIQUES -->
+                    <div class="zone-label" style="bottom: 10px; left: 10px;">0, 0</div>
+                    <div class="zone-label" style="bottom: 10px; right: 10px;">30cm, 0</div>
+                    <div class="zone-label" style="top: 10px; left: 10px;">0, 30cm</div>
+                    <div class="zone-label" style="top: 10px; right: 10px;">30cm, 30cm</div>
+                </div>
+                <div style="margin-top: 10px; font-size: 12px; color: #666; text-align: center;">
+                    📦 Zone réelle : 30cm × 30cm | Échelle : 2000px = 1m (2px = 1mm)<br>
+                    ⚠️ Système : Origine (0,0) = Coin BAS-GAUCHE, Y augmente vers le HAUT
+                </div>
+                
+                <div class="warning-box">
+                    <h3>✅ CONFIGURATION DIAGONALE CORRECTE</h3>
+                    <p>📍 Scanner A: BAS-GAUCHE (5cm, 5cm)</p>
+                    <p>📍 Scanner B: HAUT-DROITE (25cm, 25cm)</p>
+                    <p>🎯 Axe Y inversé pour correspondre au carton physique</p>
+                </div>
+                
+                <div class="debug-info" id="debug"></div>
+            </div>
+
+            <div class="info-panel">
+                <div class="info-section">
+                    <div class="info-title">📡 État du Système</div>
+                    <div class="info-item">
+                        <span class="info-label">Statut :</span>
+                        <span class="status-badge status-offline" id="status">CONNEXION...</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Dernière MAJ :</span>
+                        <span class="info-value" id="lastUpdate">--:--:--</span>
+                    </div>
+                </div>
+
+                <div class="info-section">
+                    <div class="info-title">🎯 Position Beacon</div>
+                    <div class="info-item">
+                        <span class="info-label">X :</span>
+                        <span class="info-value" id="beaconX">-- cm</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Y :</span>
+                        <span class="info-value" id="beaconY">-- cm</span>
+                    </div>
+                </div>
+
+                <div class="info-section">
+                    <div class="info-title">📊 Scanner A (Bas-Gauche)</div>
+                    <div class="info-item">
+                        <span class="info-label">Position :</span>
+                        <span class="info-value">5cm, 5cm</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">RSSI :</span>
+                        <span class="info-value" id="rssiA">-- dBm</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Distance :</span>
+                        <span class="info-value" id="distA">-- cm</span>
+                    </div>
+                </div>
+
+                <div class="info-section">
+                    <div class="info-title">📊 Scanner B (Haut-Droite)</div>
+                    <div class="info-item">
+                        <span class="info-label">Position :</span>
+                        <span class="info-value">25cm, 25cm</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">RSSI :</span>
+                        <span class="info-value" id="rssiB">-- dBm</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Distance :</span>
+                        <span class="info-value" id="distB">-- cm</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ════════════════════════════════════════════════════════
+        // CONFIGURATION - CARTON 30m × 30cm
+        // SYSTÈME DE COORDONNÉES PHYSIQUE
+        // ════════════════════════════════════════════════════════
+        
+        const TB_SERVER = "https://thingsboard.cloud";
+        const DEVICE_ID_BEACON = "59c395b0-bf59-11f0-bcf0-0bef5ca18fec";
+        const TB_USERNAME = "iddouch.fatimaezzahra23@ump.ac.ma";
+        const TB_PASSWORD = "iddfati123";
+        
+        let authToken = null;
+        
+        // Positions des scanners (EN MÈTRES) - COORDONNÉES PHYSIQUES
+        // Origine (0,0) = Coin BAS-GAUCHE du carton
+        const SCANNERS = {
+            A: { x: 0.05, y: 0.05 },    // 5cm, 5cm (Bas-Gauche)
+            B: { x: 0.25, y: 0.25 }    // 28.5cm, 25cm (Haut-Droite)
+        };
+        
+        // Dimensions du carton
+        const CARTON_WIDTH = 0.30;   // 33.5cm en mètres
+        const CARTON_HEIGHT = 0.30;   // 30cm en mètres
+        
+        // ÉCHELLE : 670px de large pour 0.335m
+        const SCALE = 2000;  // 2000 pixels = 1 mètre
+        
+        let lastFetchTime = 0;
+        let fetchCount = 0;
+        
+        // ════════════════════════════════════════════════════════
+        // FONCTION : CONVERTIR COORDONNÉES PHYSIQUES → HTML
+        // ════════════════════════════════════════════════════════
+        
+        function physicalToHTML(x, y) {
+            // X reste identique (de gauche à droite)
+            const htmlX = x * SCALE;
+            
+            // Y INVERSÉ : en physique Y=0 est en bas, en HTML Y=0 est en haut
+            // Hauteur totale = 30cm = 0.30m
+            const htmlY = (CARTON_HEIGHT - y) * SCALE;
+            
+            return { x: htmlX, y: htmlY };
+        }
+        
+        // ════════════════════════════════════════════════════════
+        // INITIALISATION DE LA CARTE
+        // ════════════════════════════════════════════════════════
+        
+        const map = document.getElementById('map');
+        
+        // Ajouter les scanners avec INVERSION de Y
+        Object.keys(SCANNERS).forEach(id => {
+            const scanner = SCANNERS[id];
+            const el = document.createElement('div');
+            el.className = 'scanner';
+            el.textContent = id;
+            el.id = 'scanner' + id;
+            
+            const pos = physicalToHTML(scanner.x, scanner.y);
+            el.style.left = (pos.x - 25) + 'px';
+            el.style.top = (pos.y - 25) + 'px';
+            
+            map.appendChild(el);
+        });
+        
+        // Ajouter le beacon
+        const beacon = document.createElement('div');
+        beacon.className = 'beacon';
+        beacon.id = 'beacon';
+        const initialPos = physicalToHTML(0.17, 0.15);
+        beacon.style.left = (initialPos.x - 20) + 'px';
+        beacon.style.top = (initialPos.y - 20) + 'px';
+        map.appendChild(beacon);
+        
+        // Lignes de distance
+        const lineA = document.createElement('div');
+        lineA.className = 'distance-line';
+        lineA.id = 'lineA';
+        map.appendChild(lineA);
+        
+        const lineB = document.createElement('div');
+        lineB.className = 'distance-line';
+        lineB.id = 'lineB';
+        map.appendChild(lineB);
+        
+        // ════════════════════════════════════════════════════════
+        // FONCTION : DEBUG
+        // ════════════════════════════════════════════════════════
+        
+        function addDebug(message) {
+            const debug = document.getElementById('debug');
+            const time = new Date().toLocaleTimeString();
+            debug.innerHTML = `[${time}] ${message}<br>` + debug.innerHTML;
+        }
+        
+        // ════════════════════════════════════════════════════════
+        // FONCTION : AUTHENTIFICATION
+        // ════════════════════════════════════════════════════════
+        
+        async function getAuthToken() {
+            if (authToken) return authToken;
+            
+            try {
+                const response = await fetch(`${TB_SERVER}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        username: TB_USERNAME,
+                        password: TB_PASSWORD
+                    })
+                });
+                
+                if (response.status === 200) {
+                    const data = await response.json();
+                    authToken = data.token;
+                    addDebug('✅ Authentification OK');
+                    return authToken;
+                } else {
+                    addDebug(`❌ Auth échouée: ${response.status}`);
+                    return null;
+                }
+            } catch (error) {
+                addDebug(`❌ Erreur auth: ${error.message}`);
+                return null;
+            }
+        }
+        
+        // ════════════════════════════════════════════════════════
+        // FONCTION : RÉCUPÉRER LES DONNÉES
+        // ════════════════════════════════════════════════════════
+        
+        async function fetchData() {
+            fetchCount++;
+            
+            const token = await getAuthToken();
+            if (!token) {
+                document.getElementById('status').textContent = 'ERREUR AUTH';
+                document.getElementById('status').className = 'status-badge status-offline';
+                return;
+            }
+            
+            try {
+                const url = `${TB_SERVER}/api/plugins/telemetry/DEVICE/${DEVICE_ID_BEACON}/values/timeseries?keys=beacon_x,beacon_y,rssi_A,rssi_B,distance_A,distance_B`;
+                
+                const response = await fetch(url, {
+                    headers: {
+                        'X-Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.status === 200) {
+                    const data = await response.json();
+                    
+                    if (data && Object.keys(data).length > 0) {
+                        updateDisplay(data);
+                        
+                        document.getElementById('status').textContent = 'EN LIGNE';
+                        document.getElementById('status').className = 'status-badge status-online';
+                        lastFetchTime = Date.now();
+                        
+                        if (fetchCount % 10 === 0) {
+                            addDebug(`✅ ${fetchCount} mises à jour`);
+                        }
+                    } else {
+                        if (Date.now() - lastFetchTime > 10000) {
+                            document.getElementById('status').textContent = 'PAS DE DONNÉES';
+                            document.getElementById('status').className = 'status-badge status-offline';
+                            addDebug('⚠️ Aucune donnée');
+                        }
+                    }
+                } else if (response.status === 401) {
+                    authToken = null;
+                    addDebug('Token expiré, réauth...');
+                } else {
+                    addDebug(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                addDebug(`Erreur: ${error.message}`);
+                document.getElementById('status').textContent = 'ERREUR RÉSEAU';
+                document.getElementById('status').className = 'status-badge status-offline';
+            }
+        }
+        
+        // ════════════════════════════════════════════════════════
+        // FONCTION : METTRE À JOUR L'AFFICHAGE
+        // ════════════════════════════════════════════════════════
+        
+        function updateDisplay(data) {
+            function getValue(key) {
+                if (data[key] && data[key].length > 0) {
+                    return data[key][0].value;
+                }
+                return null;
+            }
+            
+            const beaconX = parseFloat(getValue('beacon_x')) || 0.17;
+            const beaconY = parseFloat(getValue('beacon_y')) || 0.15;
+            const rssiA = parseInt(getValue('rssi_A')) || 0;
+            const rssiB = parseInt(getValue('rssi_B')) || 0;
+            const distA = parseFloat(getValue('distance_A')) || 0;
+            const distB = parseFloat(getValue('distance_B')) || 0;
+            
+            // Mettre à jour le panneau (EN CENTIMÈTRES)
+            document.getElementById('beaconX').textContent = (beaconX * 100).toFixed(1) + ' cm';
+            document.getElementById('beaconY').textContent = (beaconY * 100).toFixed(1) + ' cm';
+            document.getElementById('rssiA').textContent = rssiA + ' dBm';
+            document.getElementById('rssiB').textContent = rssiB + ' dBm';
+            document.getElementById('distA').textContent = (distA * 100).toFixed(1) + ' cm';
+            document.getElementById('distB').textContent = (distB * 100).toFixed(1) + ' cm';
+            document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+            
+            // Mettre à jour la position du beacon avec INVERSION de Y
+            const beaconEl = document.getElementById('beacon');
+            const beaconPos = physicalToHTML(beaconX, beaconY);
+            beaconEl.style.left = (beaconPos.x - 20) + 'px';
+            beaconEl.style.top = (beaconPos.y - 20) + 'px';
+            
+            // Mettre à jour les lignes de distance
+            updateDistanceLine('lineA', SCANNERS.A, {x: beaconX, y: beaconY});
+            updateDistanceLine('lineB', SCANNERS.B, {x: beaconX, y: beaconY});
+        }
+        
+        function updateDistanceLine(lineId, scanner, beacon) {
+            const line = document.getElementById(lineId);
+            
+            // Convertir les positions physiques en HTML
+            const scannerPos = physicalToHTML(scanner.x, scanner.y);
+            const beaconPos = physicalToHTML(beacon.x, beacon.y);
+            
+            // Calculer la distance et l'angle en coordonnées HTML
+            const dx = beaconPos.x - scannerPos.x;
+            const dy = beaconPos.y - scannerPos.y;
+            const length = Math.sqrt(dx * dx + dy * dy);
+            const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+            
+            line.style.width = length + 'px';
+            line.style.left = scannerPos.x + 'px';
+            line.style.top = scannerPos.y + 'px';
+            line.style.transform = `rotate(${angle}deg)`;
+        }
+        
+        // ════════════════════════════════════════════════════════
+        // DÉMARRAGE
+        // ════════════════════════════════════════════════════════
+        
+        addDebug('🚀 Initialisation...');
+        addDebug('📦 Carton: 30m × 30cm');
+        addDebug('📍 Scanner A (Bas-Gauche): 5cm, 5cm');
+        addDebug('📍 Scanner B (Haut-Droite): 25cm, 25cm');
+        addDebug('⚠️ Axe Y inversé pour correspondre au carton physique');
+        
+        setInterval(fetchData, 2000);
+        fetchData();
+    </script>
+</body>
+</html>
